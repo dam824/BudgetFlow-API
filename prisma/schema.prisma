@@ -1,15 +1,46 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(uuid())
+  firstName String     // Prénom
+  lastName  String     // Nom
+  username  String     @unique // Pseudo
+  email     String     @unique
+  password  String     // Hash du mot de passe (pas le confirm password)
+  createdAt DateTime   @default(now())
+  categories Category[] // Catégories créées par l'user
+  expenses   Expense[]  // Dépenses de l'user
+}
+
+model Category {
+  id        String     @id @default(uuid())
+  name      String     // Ex: "Essence", "Restaurants", "Loisir"
+  icon      String?    // Optionnel, pour l'icône
+  userId    String     // Chaque catégorie appartient à un user
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expenses  Expense[]
+  createdAt DateTime   @default(now())
+}
+
+model Expense {
+  id         String   @id @default(uuid())
+  amount     Float    // Montant en euros
+  categoryId String
+  userId     String
+  date       DateTime @default(now()) // Date de la dépense (jour/mois/année/heure)
+  description String? // Optionnel, pour ajouter un commentaire
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) // Date de création de l'entrée
 }
